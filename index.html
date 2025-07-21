@@ -3,7 +3,7 @@
 <h1>福井県 参議院選挙2025 市町別結果</h1>
 <main id=main></main>
 <hr>
-<div>DATA: <a href=https://www.pref.fukui.lg.jp/doc/senkan/27sangisen/27sokuho_d/fil/4-1-3.pdf>第２７回参議院議員通常選挙　投・開票速報 | 福井県ホームページ</a> (<a href=https://www.pref.fukui.lg.jp/doc/senkan/27sangisen/27sokuho_d/fil/5-1-2.pdf>開票結果【選挙区】&lt;候補者別開票区別得票数一覧&gt;</a>)</div>
+<div>DATA: <a href=https://www.pref.fukui.lg.jp/doc/senkan/27sangisen/27sokuho_d/fil/4-1-3.pdf>第２７回参議院議員通常選挙　投・開票速報 | 福井県ホームページ</a> (<a href=https://www.pref.fukui.lg.jp/doc/senkan/27sangisen/27sokuho_d/fil/5-1-2.pdf>開票結果【選挙区】&lt;候補者別開票区別得票数一覧&gt;</a>、<a href=https://www.pref.fukui.lg.jp/doc/senkan/27sangisen/27sokuho_d/fil/5-2-2.pdf>参議院比例代表選出議員選挙　開票結果（党派別開票区別得票数）</a>)</div>
 <div><a href=https://github.com/code4fukui/sangiin2025/>src on GitHub</a></div>
 
 
@@ -13,49 +13,108 @@ import { StackedBarChartSVG } from "https://code4fukui.github.io/svg-chart/Stack
 //import { StackedBarChartSVG } from "./StackedBarChartSVG.js";
 import { addComma } from "https://js.sabae.cc/addComma.js";
 
-const data = await CSV.fetchJSON("./5-1-2.csv");
-console.log(data);
-const members = Object.keys(data[0]).filter(i => i.indexOf("（") >= 0);
-const sum = data.find(i => i.開票区名 == "福井県");
-members.sort((a, b) => sum[b] - sum[a]);
-console.log(members);
-
-const colors = new Array(members.length);
-for (let i = 0; i < colors.length; i++) {
-  colors[i] = `hsl(${360 / (colors.length + 1) * i} 100% 70%)`;
-}
-console.log(colors);
-
-const show = (subtitle, flg) => {
-  const div = document.createElement("div");
-  main.appendChild(div);
-  const h2 = document.createElement("h2");
-  h2.textContent = subtitle;
-  div.appendChild(h2);
-
-  const data2 = data.map(i => {
-    //const values = ;
-    const values = flg && i.開票区名 != "福井県" ?
-      members.map(j => i[j] / 1228) :
-      members.map(j => i[j] / i.得票数計 * 100);
-    const label = `${i.開票区名} (得票数 ${addComma(i.得票数計)})`;
-    return { label, values };
-  });
-
-  const chart = new StackedBarChartSVG({
-    width: 600,
-    barHeight: 25,
-    barGap: 8,
-    categories: members,
-    colors,
-    data: data2,
-    fontSizeLegend: 11,
-    //marginBottom: 80,
-  });
-  div.appendChild(chart);
+const makeColors = (n) => {
+  const colors = new Array(n);
+  const ncolors = 6;
+  const hsls = [100, 80, 100];
+  const hsll = [70, 50, 30];
+  for (let i = 0; i < colors.length; i++) {
+    const n = Math.floor(i / ncolors) % hsls.length;
+    colors[i] = `hsl(${360 / ncolors * (i % ncolors)} ${hsls[n]} ${hsll[n]}%)`;
+  }
+  console.log(colors);
+  return colors;
 };
-show("市町別得票割合", false);
-show("福井市基準得票割合", true);
+
+const show1 = async () => {
+  const data = await CSV.fetchJSON("./5-1-2.csv");
+  console.log(data);
+  const members = Object.keys(data[0]).filter(i => i.indexOf("（") >= 0);
+  const sum = data.find(i => i.開票区名 == "福井県");
+  members.sort((a, b) => sum[b] - sum[a]);
+  console.log(members);
+
+  const colors = makeColors(members.length);
+
+  const show = (subtitle, flg) => {
+    const div = document.createElement("div");
+    main.appendChild(div);
+    const h2 = document.createElement("h2");
+    h2.textContent = subtitle;
+    div.appendChild(h2);
+
+    const data2 = data.map(i => {
+      //const values = ;
+      const values = flg && i.開票区名 != "福井県" ?
+        members.map(j => i[j] / 1228) :
+        members.map(j => i[j] / i.得票数計 * 100);
+      const label = `${i.開票区名} (得票数 ${addComma(i.得票数計)})`;
+      return { label, values };
+    });
+
+    const chart = new StackedBarChartSVG({
+      width: 600,
+      barHeight: 25,
+      barGap: 8,
+      categories: members,
+      colors,
+      data: data2,
+      fontSizeLegend: 11,
+      //marginBottom: 80,
+    });
+    div.appendChild(chart);
+  };
+  show("市町別得票割合（選挙区）", false);
+  show("福井市基準得票割合（選挙区）", true);
+};
+
+await show1();
+
+const show2 = async () => {
+  const data = await CSV.fetchJSON("./5-2-2.csv");
+  console.log(data);
+  const members = Object.keys(data[0]).filter((i, idx) => idx > 0 && i.indexOf("（") == -1);
+  const sum = data.find(i => i.開票区名 == "福井県");
+  members.sort((a, b) => sum[b] - sum[a]);
+  console.log(members);
+  for (const item of data) {
+    item.得票数計 = members.reduce((pre, val) => pre + parseFloat(item[val]), 0);
+  }
+
+  const colors = makeColors(members.length);
+
+  const show = (subtitle, flg) => {
+    const div = document.createElement("div");
+    main.appendChild(div);
+    const h2 = document.createElement("h2");
+    h2.textContent = subtitle;
+    div.appendChild(h2);
+
+    const data2 = data.map(i => {
+      const values = flg && i.開票区名 != "福井県" ?
+        members.map(j => i[j] / 1228) :
+        members.map(j => i[j] / i.得票数計 * 100);
+      const label = `${i.開票区名} (得票数 ${addComma(i.得票数計)})`;
+      return { label, values };
+    });
+
+    const chart = new StackedBarChartSVG({
+      width: 600,
+      barHeight: 25,
+      barGap: 8,
+      categories: members,
+      colors,
+      data: data2,
+      fontSizeLegend: 11,
+      //marginBottom: 80,
+    });
+    div.appendChild(chart);
+  };
+  show("市町別得票割合（比例）", false);
+  show("福井市基準得票割合（比例）", true);
+};
+
+await show2();
 
 </script>
 
