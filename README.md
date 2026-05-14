@@ -6,7 +6,7 @@
 
 ## Demo
 
-**https://code4fukui.github.io/sangiin2025/**
+**https://github.com/code4fukui/sangiin2025
 
 The application displays four stacked bar charts visualizing election results by municipality:
 1.  **市町別得票割合（選挙区）**: Vote share by candidate for each municipality.

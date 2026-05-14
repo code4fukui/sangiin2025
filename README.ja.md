@@ -4,7 +4,7 @@
 
 ## デモ
 
-**https://code4fukui.github.io/sangiin2025/**
+**https://github.com/code4fukui/sangiin2025
 
 このアプリケーションでは、市町ごとの選挙結果を4つのスタックバーチャートで表示します:
 1.  **市町別得票割合（選挙区）**: 各市町における候補者別の得票割合を表示します。
